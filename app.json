@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0B3D24"
+      },
+      "package": "com.foodie.app"
+    },
+    "experiments": {
+      "typedRoutes": false
+    },
+    "ios": {
+      "bundleIdentifier": "com.foodie.app",
+      "supportsTablet": true
+    },
+    "name": "Foodie",
+    "newArchEnabled": true,
+    "orientation": "portrait",
+    "plugins": [
+      "expo-router"
+    ],
+    "scheme": "foodie",
+    "slug": "foodie-app",
+    "userInterfaceStyle": "light",
+    "version": "1.0.0",
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "5efb8bd4-bff0-48dd-9022-dece9252c51d"
+      }
+    }
+  }
+}

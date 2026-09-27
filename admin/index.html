@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Foodie — Admin Dashboard</title>
+<style>
+  :root {
+    --primary: #178a4c; --dark: #0b3d24; --light: #e8f5ed;
+    --bg: #f5f7f5; --card: #fff; --text: #111814; --muted: #6f7a71;
+    --border: #e4e9e5; --orange: #e8930c; --red: #d64545; --blue: #2f7fe0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
+  aside { width: 230px; background: var(--dark); color: #fff; padding: 24px 0; flex-shrink: 0; position: sticky; top: 0; height: 100vh; }
+  aside .logo { font-size: 22px; font-weight: 800; padding: 0 24px 24px; }
+  aside nav button { display: flex; width: 100%; gap: 12px; align-items: center; background: none; border: none; color: rgba(255,255,255,.75); padding: 13px 24px; font-size: 15px; cursor: pointer; text-align: left; }
+  aside nav button.active, aside nav button:hover { background: rgba(255,255,255,.1); color: #fff; }
+  main { flex: 1; padding: 28px; max-width: 1100px; }
+  h1 { font-size: 24px; margin-bottom: 20px; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .stat { background: var(--card); border-radius: 14px; padding: 20px; border: 1px solid var(--border); }
+  .stat .label { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  .stat .value { font-size: 26px; font-weight: 800; }
+  .card { background: var(--card); border-radius: 14px; padding: 20px; border: 1px solid var(--border); margin-bottom: 20px; }
+  .card h2 { font-size: 17px; margin-bottom: 14px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; padding: 10px 8px; border-bottom: 1px solid var(--border); }
+  td { padding: 12px 8px; border-bottom: 1px solid var(--border); }
+  tr:last-child td { border-bottom: none; }
+  .pill { display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+  .pill.green { background: var(--light); color: var(--primary); }
+  .pill.orange { background: #fdf1e2; color: var(--orange); }
+  .pill.gray { background: var(--bg); color: var(--muted); }
+  .pill.blue { background: #e7f0fd; color: var(--blue); }
+  .user { display: flex; align-items: center; gap: 10px; }
+  .avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 800; }
+  .bars { display: flex; align-items: flex-end; gap: 8px; height: 160px; padding-top: 10px; }
+  .bar { flex: 1; background: var(--primary); border-radius: 6px 6px 0 0; opacity: .85; }
+  .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 15px; }
+  .row:last-child { border-bottom: none; }
+  .row .k { color: var(--muted); }
+  input[type=text], input[type=number] { border: 1px solid var(--border); border-radius: 10px; padding: 11px 14px; font-size: 15px; width: 100%; }
+  .btn { background: var(--primary); color: #fff; border: none; border-radius: 10px; padding: 13px 22px; font-size: 15px; font-weight: 700; cursor: pointer; }
+  .btn:hover { filter: brightness(.95); }
+  .form-grid { display: grid; gap: 14px; max-width: 480px; }
+  label { font-size: 13px; font-weight: 600; color: var(--muted); display: block; margin-bottom: 6px; }
+  .cat-list { display: flex; flex-direction: column; gap: 10px; }
+  .cat { display: flex; align-items: center; gap: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; }
+  .cat .icon { font-size: 22px; }
+  section.view { display: none; }
+  section.view.active { display: block; }
+  @media (max-width: 720px) { aside { display: none; } main { padding: 16px; } }
+</style>
+</head>
+<body>
+<aside>
+  <div class="logo">🌿 Foodie</div>
+  <nav>
+    <button class="active" data-view="dashboard">📊 Dashboard</button>
+    <button data-view="users">👥 Users</button>
+    <button data-view="orders">🧾 Orders &amp; Payments</button>
+    <button data-view="commission">💰 Commission</button>
+    <button data-view="reports">📈 Reports</button>
+    <button data-view="categories">🏷️ Categories</button>
+  </nav>
+</aside>
+<main>
+  <section class="view active" id="view-dashboard">
+    <h1>Dashboard</h1>
+    <div class="stats">
+      <div class="stat"><div class="label">Users</div><div class="value">1,248</div></div>
+      <div class="stat"><div class="label">Food Makers</div><div class="value">342</div></div>
+      <div class="stat"><div class="label">Total Orders</div><div class="value">5,681</div></div>
+      <div class="stat"><div class="label">Revenue</div><div class="value">$56,420</div></div>
+    </div>
+    <div class="card">
+      <h2>Recent Orders</h2>
+      <table>
+        <tr><th>Order</th><th>Customer</th><th>Total</th><th>Status</th></tr>
+        <tr><td>#FD123456</td><td>Sarah Johnson</td><td>$20.00</td><td><span class="pill orange">Preparing</span></td></tr>
+        <tr><td>#FD123455</td><td>Michael Lee</td><td>$16.00</td><td><span class="pill orange">Preparing</span></td></tr>
+        <tr><td>#FD123454</td><td>Emily Davis</td><td>$12.00</td><td><span class="pill blue">Active</span></td></tr>
+        <tr><td>#FD123453</td><td>James Wilson</td><td>$26.00</td><td><span class="pill green">Completed</span></td></tr>
+      </table>
+    </div>
+  </section>
+
+  <section class="view" id="view-users">
+    <h1>Users Management</h1>
+    <div class="card">
+      <table>
+        <tr><th>User</th><th>Role</th><th>Status</th></tr>
+        <tr><td><div class="user"><div class="avatar">S</div>Sarah Johnson</div></td><td>Customer</td><td><span class="pill green">Active</span></td></tr>
+        <tr><td><div class="user"><div class="avatar">M</div>Michael Lee</div></td><td>Customer</td><td><span class="pill green">Active</span></td></tr>
+        <tr><td><div class="user"><div class="avatar">E</div>Emily Davis</div></td><td>Food Maker</td><td><span class="pill orange">Pending</span></td></tr>
+        <tr><td><div class="user"><div class="avatar">J</div>James Wilson</div></td><td>Food Maker</td><td><span class="pill green">Active</span></td></tr>
+        <tr><td><div class="user"><div class="avatar">P</div>Priya Sharma</div></td><td>Food Maker</td><td><span class="pill green">Active</span></td></tr>
+      </table>
+    </div>
+  </section>
+
+  <section class="view" id="view-orders">
+    <h1>Orders &amp; Payments</h1>
+    <div class="card">
+      <table>
+        <tr><th>Order</th><th>Total</th><th>Payment</th><th>Status</th></tr>
+        <tr><td>#FD123456</td><td>$20.00</td><td>Apple Pay</td><td><span class="pill orange">Preparing</span></td></tr>
+        <tr><td>#FD123455</td><td>$16.00</td><td>Card</td><td><span class="pill orange">Preparing</span></td></tr>
+        <tr><td>#FD123454</td><td>$12.00</td><td>Google Pay</td><td><span class="pill blue">Active</span></td></tr>
+        <tr><td>#FD123453</td><td>$26.00</td><td>Card</td><td><span class="pill green">Completed</span></td></tr>
+      </table>
+    </div>
+  </section>
+
+  <section class="view" id="view-commission">
+    <h1>Commission Settings</h1>
+    <div class="card">
+      <div class="form-grid">
+        <div><label>Commission Rate</label><input type="text" value="10%" /></div>
+        <div><label>Payment Processing Fee</label><input type="text" value="2.9% + $0.30" /></div>
+        <div><button class="btn">Save Changes</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="view-reports">
+    <h1>Reports</h1>
+    <div class="card">
+      <h2>Revenue Report <span style="color:var(--muted);font-weight:400;font-size:13px">(Jun 1 – Jun 30)</span></h2>
+      <div class="row"><span class="k">Total Revenue</span><strong>$56,420</strong></div>
+      <div class="row"><span class="k">Commission (10%)</span><strong>$5,642</strong></div>
+      <div class="row"><span class="k">Net Payouts</span><strong>$50,778</strong></div>
+      <div class="bars">
+        <div class="bar" style="height:35%"></div><div class="bar" style="height:55%"></div>
+        <div class="bar" style="height:45%"></div><div class="bar" style="height:70%"></div>
+        <div class="bar" style="height:52%"></div><div class="bar" style="height:85%"></div>
+        <div class="bar" style="height:66%"></div><div class="bar" style="height:60%"></div>
+        <div class="bar" style="height:78%"></div><div class="bar" style="height:58%"></div>
+        <div class="bar" style="height:92%"></div><div class="bar" style="height:74%"></div>
+      </div>
+      <div style="margin-top:16px"><button class="btn">Export Report</button></div>
+    </div>
+  </section>
+
+  <section class="view" id="view-categories">
+    <h1>Categories Management</h1>
+    <div class="card">
+      <div class="cat-list">
+        <div class="cat"><span class="icon">🍛</span>Indian</div>
+        <div class="cat"><span class="icon">🌮</span>Mexican</div>
+        <div class="cat"><span class="icon">🍝</span>Italian</div>
+        <div class="cat"><span class="icon">🍜</span>Asian</div>
+        <div class="cat"><span class="icon">🥐</span>Bakery &amp; Desserts</div>
+        <div class="cat"><span class="icon">🥗</span>Healthy</div>
+        <div class="cat"><span class="icon">🍔</span>American</div>
+        <div class="cat"><span class="icon">⋯</span>Other</div>
+      </div>
+      <div style="margin-top:16px"><button class="btn">+ Add Category</button></div>
+    </div>
+  </section>
+</main>
+<script>
+  document.querySelectorAll('aside nav button').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('aside nav button').forEach((b) => b.classList.remove('active'));
+      document.querySelectorAll('section.view').forEach((v) => v.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('view-' + btn.dataset.view).classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>

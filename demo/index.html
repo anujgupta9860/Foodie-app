@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foodie — Clickable Demo</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --primary: #178A4C; --dark: #0B3D24; --light: #E8F5ED;
+    --text: #111814; --muted: #6F7A71; --border: #E4E9E5;
+    --bg: #FFFFFF; --surface: #F5F7F5; --star: #F6A723;
+    --orange: #E8930C; --red: #D64545; --blue: #2F7FE0;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: radial-gradient(1200px 800px at 20% 10%, #14532d 0%, #0B3D24 45%, #071f12 100%);
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+    padding: 28px 16px; color: #fff;
+  }
+  .demo-head { text-align: center; margin-bottom: 18px; max-width: 640px; }
+  .demo-head h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
+  .demo-head h1 span { color: #7ddfa4; }
+  .demo-head p { font-size: 14px; opacity: 0.75; margin-top: 6px; line-height: 1.5; }
+  .demo-head button {
+    margin-top: 10px; background: rgba(255,255,255,0.12); color: #fff; border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 999px; padding: 8px 18px; font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .demo-head button:hover { background: rgba(255,255,255,0.2); }
+  .phone {
+    width: 390px; max-width: 94vw; height: min(844px, 92vh);
+    background: #000; border-radius: 54px; padding: 12px;
+    box-shadow: 0 40px 100px rgba(0,0,0,0.55), 0 0 0 2px #2a2a2a;
+    position: relative;
+  }
+  .notch {
+    position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+    width: 120px; height: 30px; background: #000; border-radius: 0 0 18px 18px; z-index: 30;
+  }
+  .screen {
+    width: 100%; height: 100%; background: var(--bg); border-radius: 44px; overflow: hidden;
+    position: relative; display: flex; flex-direction: column; color: var(--text);
+  }
+  .screen-inner { flex: 1; overflow-y: auto; scrollbar-width: none; position: relative; }
+  .screen-inner::-webkit-scrollbar { display: none; }
+  .fade { animation: fadeSlide 0.22s ease; }
+  @keyframes fadeSlide { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
+
+  /* generic */
+  .pad { padding: 16px; }
+  .brand { font-size: 24px; font-weight: 800; color: var(--primary); }
+  .h1 { font-size: 24px; font-weight: 800; }
+  .h2 { font-size: 20px; font-weight: 800; }
+  .h3 { font-size: 17px; font-weight: 700; }
+  .muted { color: var(--muted); font-size: 14px; }
+  .btn {
+    display: block; width: 100%; border: none; border-radius: 12px; padding: 15px;
+    font-size: 16px; font-weight: 700; cursor: pointer; text-align: center;
+    background: var(--primary); color: #fff; margin-top: 12px;
+  }
+  .btn:active { transform: scale(0.98); filter: brightness(0.95); }
+  .btn.dark { background: #111; }
+  .btn.outline { background: #fff; color: var(--primary); border: 1.5px solid var(--border); }
+  .btn-row { display: flex; gap: 10px; }
+  .btn-row .btn { margin-top: 0; }
+  .hdr { display: flex; align-items: center; padding: 10px 8px; }
+  .hdr .back { width: 40px; font-size: 24px; cursor: pointer; color: var(--text); }
+  .hdr .title { flex: 1; text-align: center; font-size: 17px; font-weight: 700; }
+  .hdr .spacer { width: 40px; }
+  .card { background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 14px; margin-bottom: 12px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px; padding: 9px 14px; border-radius: 999px;
+    background: var(--surface); font-size: 14px; font-weight: 600; margin: 0 8px 8px 0; cursor: pointer;
+    border: 1.5px solid transparent; white-space: nowrap;
+  }
+  .chip.on { background: var(--light); border-color: var(--primary); color: var(--dark); }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+  .field input, .field textarea, .field select {
+    width: 100%; border: 1px solid var(--border); border-radius: 12px; padding: 13px 14px;
+    font-size: 16px; font-family: inherit; background: #fff; color: var(--text);
+  }
+  .field textarea { resize: vertical; min-height: 70px; }
+  .stars { color: var(--star); font-size: 15px; letter-spacing: 1px; }
+  .stars.big { font-size: 34px; letter-spacing: 6px; cursor: pointer; }
+  .stars.big span { cursor: pointer; padding: 2px; }
+  .pill { display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+  .pill.green { background: var(--light); color: var(--primary); }
+  .pill.orange { background: #FDF1E2; color: var(--orange); }
+  .pill.blue { background: #E7F0FD; color: var(--blue); }
+  .pill.gray { background: var(--surface); color: var(--muted); }
+
+  /* tab bar */
+  .tabbar {
+    display: flex; border-top: 1px solid var(--border); background: #fff;
+    padding: 8px 0 22px; flex-shrink: 0;
+  }
+  .tab { flex: 1; text-align: center; font-size: 11px; color: var(--muted); cursor: pointer; font-weight: 600; }
+  .tab .ic { font-size: 23px; display: block; margin-bottom: 2px; }
+  .tab.on { color: var(--primary); }
+
+  /* food cards */
+  .food-card {
+    display: flex; gap: 12px; align-items: center; background: #fff;
+    border: 1px solid var(--border); border-radius: 16px; padding: 10px; margin-bottom: 12px; cursor: pointer;
+  }
+  .food-card:active { transform: scale(0.99); }
+  .food-card img { width: 84px; height: 84px; border-radius: 12px; object-fit: cover; background: var(--surface); flex-shrink: 0; }
+  .food-card .nm { font-size: 16px; font-weight: 700; }
+  .food-card .ck { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .food-card .meta { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .food-card .low { font-size: 12px; color: var(--orange); font-weight: 600; margin-top: 3px; }
+  .food-card .pr { font-size: 19px; font-weight: 800; margin-left: auto; }
+
+  /* splash */
+  .splash { background: var(--dark); color: #fff; height: 100%; display: flex; flex-direction: column; padding: 24px; text-align: center; }
+  .splash .center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .splash .logo { width: 110px; height: 110px; border-radius: 55px; background: rgba(255,255,255,0.14); font-size: 56px; display: flex; align-items: center; justify-content: center; margin-bottom: 14px; }
+  .splash h1 { font-size: 44px; font-weight: 800; }
+  .splash p { opacity: 0.85; margin-top: 8px; line-height: 1.5; }
+  .splash .login { margin-top: 14px; font-size: 14px; opacity: 0.85; cursor: pointer; }
+  .splash .login b { opacity: 1; }
+
+  .role-card {
+    border: 1.5px solid var(--border); border-radius: 18px; padding: 26px; text-align: center;
+    margin-bottom: 14px; cursor: pointer; background: #fff;
+  }
+  .role-card.on { border-color: var(--primary); background: var(--light); }
+  .role-card .ic { width: 64px; height: 64px; border-radius: 32px; background: var(--surface); font-size: 30px; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; }
+  .role-card.on .ic { background: #fff; }
+
+  .hero { position: relative; border-radius: 18px; overflow: hidden; margin: 14px 0; height: 150px; }
+  .hero img { width: 100%; height: 100%; object-fit: cover; }
+  .hero .ov { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0,0,0,0.65), rgba(0,0,0,0.15)); display: flex; flex-direction: column; justify-content: center; padding: 18px; color: #fff; }
+  .hero .ov b { font-size: 18px; }
+  .hero .ov span { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+
+  .fab {
+    position: absolute; bottom: 96px; left: 16px; right: 16px; background: var(--dark); color: #fff;
+    border-radius: 14px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center;
+    font-weight: 700; cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,0.3); z-index: 5;
+  }
+  .stepper { display: inline-flex; align-items: center; background: var(--surface); border-radius: 999px; padding: 4px; }
+  .stepper button { width: 30px; height: 30px; border-radius: 15px; border: 1px solid var(--border); background: #fff; font-size: 17px; cursor: pointer; color: var(--primary); font-weight: 700; }
+  .stepper span { min-width: 30px; text-align: center; font-weight: 700; }
+  .radio-card { border: 1.5px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 10px; cursor: pointer; display: flex; gap: 12px; align-items: center; background: #fff; }
+  .radio-card.on { border-color: var(--primary); background: var(--light); }
+  .radio-dot { width: 20px; height: 20px; border-radius: 10px; border: 2px solid var(--border); flex-shrink: 0; position: relative; }
+  .radio-card.on .radio-dot { border-color: var(--primary); }
+  .radio-card.on .radio-dot::after { content: ''; position: absolute; inset: 3px; border-radius: 50%; background: var(--primary); }
+  .check-big { width: 90px; height: 90px; border-radius: 45px; background: var(--primary); color: #fff; font-size: 44px; display: flex; align-items: center; justify-content: center; margin: 30px auto 16px; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+  .tabs .t { flex: 1; text-align: center; padding: 10px; border-radius: 12px; background: var(--surface); font-weight: 700; font-size: 14px; cursor: pointer; color: var(--muted); }
+  .tabs .t.on { background: var(--dark); color: #fff; }
+  .menu-row { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+  .menu-row:last-child { border-bottom: none; }
+  .menu-row .ic { font-size: 20px; width: 28px; text-align: center; }
+  .menu-row .tx { flex: 1; font-size: 15px; font-weight: 600; }
+  .menu-row .chev { color: var(--muted); }
+  .stat-grid { display: flex; gap: 10px; margin: 14px 0; }
+  .stat { flex: 1; background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 14px 8px; text-align: center; }
+  .stat .v { font-size: 20px; font-weight: 800; color: var(--primary); }
+  .stat .l { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .prog { height: 6px; background: var(--surface); border-radius: 3px; margin-top: 8px; overflow: hidden; }
+  .prog i { display: block; height: 100%; background: var(--primary); border-radius: 3px; }
+  .switch { width: 46px; height: 28px; border-radius: 14px; background: #ccc; position: relative; cursor: pointer; flex-shrink: 0; transition: background 0.2s; }
+  .switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 11px; background: #fff; transition: left 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+  .switch.on { background: var(--primary); }
+  .switch.on::after { left: 21px; }
+  .bars { display: flex; align-items: flex-end; gap: 7px; height: 150px; margin-top: 12px; }
+  .bars i { flex: 1; background: var(--primary); border-radius: 5px 5px 0 0; opacity: 0.88; }
+  .kv { display: flex; justify-content: space-between; padding: 9px 0; font-size: 15px; border-bottom: 1px solid var(--border); }
+  .kv:last-child { border-bottom: none; }
+  .kv .k { color: var(--muted); }
+  .verify-row { display: flex; align-items: center; gap: 12px; background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 15px; margin-bottom: 10px; }
+  .verify-row .ic { font-size: 22px; }
+  .verify-row .tx { flex: 1; font-weight: 600; font-size: 15px; }
+  .banner { position: relative; height: 170px; }
+  .banner img { width: 100%; height: 100%; object-fit: cover; }
+  .banner .bk { position: absolute; top: 12px; left: 12px; width: 36px; height: 36px; border-radius: 18px; background: rgba(255,255,255,0.92); display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; }
+  .avatar-lg { width: 84px; height: 84px; border-radius: 42px; object-fit: cover; border: 3px solid #fff; margin-top: -42px; background: var(--surface); }
+  .detail-img { position: relative; height: 260px; }
+  .detail-img img { width: 100%; height: 100%; object-fit: cover; }
+  .detail-img .bk { position: absolute; top: 14px; left: 14px; width: 38px; height: 38px; border-radius: 19px; background: rgba(255,255,255,0.94); display: flex; align-items: center; justify-content: center; font-size: 22px; cursor: pointer; }
+  .bottom-cta { padding: 12px 16px 26px; background: #fff; border-top: 1px solid var(--border); display: flex; gap: 12px; align-items: center; flex-shrink: 0; }
+  .bottom-cta .btn { margin-top: 0; }
+  .tag { display: inline-block; background: var(--surface); border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 600; color: var(--muted); margin: 0 6px 6px 0; }
+  .searchbar { display: flex; align-items: center; gap: 8px; background: var(--surface); border-radius: 12px; padding: 12px 14px; margin-bottom: 6px; cursor: pointer; }
+  .searchbar input { border: none; background: none; outline: none; font-size: 15px; flex: 1; font-family: inherit; }
+  .mapbox { height: 210px; border-radius: 18px; background: #eef2ee; border: 1px solid var(--border); margin-top: 12px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+  .mapbox .ring { position: absolute; width: 150px; height: 150px; border-radius: 75px; background: rgba(23,138,76,0.12); border: 1.5px solid var(--primary); }
+  .mapbox .pin { font-size: 34px; z-index: 1; }
+  .order-card { background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 14px; margin-bottom: 12px; }
+  .footer-note { text-align: center; color: rgba(255,255,255,0.5); font-size: 12px; margin-top: 14px; }
+  @media (max-height: 700px) { .phone { height: 94vh; } }
+</style>
+</head>
+<body>
+  <div class="demo-head">
+    <h1>🌿 Foodie <span>· interactive demo</span></h1>
+    <p>Tap through the full app — customer ordering on the left flow, food-maker selling on the right flow. Cart, checkout, orders, ratings and the maker dashboard all work.</p>
+    <button onclick="App.reset()">↺ Restart demo</button>
+  </div>
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="screen"><div class="screen-inner" id="screen"></div><div id="tabbar-slot"></div></div>
+  </div>
+  <div class="footer-note">Demo with sample data · mirrors the Foodie iOS/Android app screens</div>
+<script>
+/* ================= DATA ================= */
+const IMG = (seed, w=800, h=600) => `https://picsum.photos/seed/${seed}/${w}/${h}`;
+const CATS = [
+  {id:'indian',label:'Indian',icon:'🍛'},{id:'mexican',label:'Mexican',icon:'🌮'},
+  {id:'italian',label:'Italian',icon:'🍝'},{id:'asian',label:'Asian',icon:'🍜'},
+  {id:'bakery',label:'Bakery',icon:'🥐'},{id:'healthy',label:'Healthy',icon:'🥗'},
+  {id:'american',label:'American',icon:'🍔'},
+];
+const COOKS = {
+  priya:{id:'priya',name:"Priya's Kitchen",avatar:IMG('priya-face',200,200),banner:IMG('priya-banner',1200,500),rating:4.8,reviews:63,dist:1.4,about:'I love cooking traditional Indian food for my local community',followers:'1.2k'},
+  maria:{id:'maria',name:"Maria's Cocina",avatar:IMG('maria-face',200,200),banner:IMG('maria-banner',1200,500),rating:4.9,reviews:41,dist:2.1,about:'Authentic Mexican recipes passed down three generations',followers:'860'},
+  tony:{id:'tony',name:"Tony's Trattoria",avatar:IMG('tony-face',200,200),banner:IMG('tony-banner',1200,500),rating:4.7,reviews:88,dist:3.2,about:'Wood-fired Italian classics from my family kitchen',followers:'2.1k'},
+  lin:{id:'lin',name:"Lin's Kitchen",avatar:IMG('lin-face',200,200),banner:IMG('lin-banner',1200,500),rating:4.9,reviews:52,dist:0.8,about:'Fresh Asian comfort food, made every morning',followers:'940'},
+};
+const FOODS = [
+  {id:'chicken-biryani',cook:'priya',name:'Chicken Biryani',price:14,img:IMG('biryani-dish'),cat:'indian',desc:'Fragrant basmati rice with chicken, spices and homemade masala.',tags:['Non-veg','Medium spice'],portion:'1 portion = 350g',left:6,total:10,pu:'5:00 PM - 7:00 PM',dist:1.4},
+  {id:'gulab-jamun',cook:'priya',name:'Gulab Jamun',price:6,img:IMG('gulab-jamun'),cat:'indian',desc:'Soft milk dumplings soaked in rose-cardamom syrup.',tags:['Veg','Sweet'],portion:'4 pieces = 200g',left:10,total:24,pu:'5:00 PM - 7:00 PM',dist:1.4},
+  {id:'garlic-naan',cook:'priya',name:'Garlic Naan',price:4,img:IMG('garlic-naan'),cat:'indian',desc:'Fluffy tandoor-style flatbread brushed with garlic butter.',tags:['Veg'],portion:'2 pieces',left:12,total:20,pu:'5:00 PM - 7:00 PM',dist:1.4},
+  {id:'paneer-butter-masala',cook:'priya',name:'Paneer Butter Masala',price:16,img:IMG('paneer-masala'),cat:'indian',desc:'Cottage cheese simmered in a creamy tomato gravy.',tags:['Veg','Mild'],portion:'1 portion = 350g',left:8,total:12,pu:'5:00 PM - 7:00 PM',dist:1.4},
+  {id:'tacos-al-pastor',cook:'maria',name:'Tacos al Pastor',price:12,img:IMG('tacos-pastor'),cat:'mexican',desc:'Marinated pork, pineapple, onion and cilantro on corn tortillas.',tags:['Non-veg','Spicy'],portion:'3 tacos',left:9,total:15,pu:'6:00 PM - 8:00 PM',dist:2.1},
+  {id:'churros',cook:'maria',name:'Churros',price:5,img:IMG('churros-dessert'),cat:'mexican',desc:'Crispy cinnamon-sugar churros with a chocolate dip.',tags:['Veg','Sweet'],portion:'5 pieces',left:14,total:20,pu:'6:00 PM - 8:00 PM',dist:2.1},
+  {id:'margherita-pizza',cook:'tony',name:'Margherita Pizza',price:15,img:IMG('margherita-pizza'),cat:'italian',desc:'San Marzano tomato, fior di latte and basil on a wood-fired crust.',tags:['Veg'],portion:'12 inch',left:5,total:8,pu:'6:30 PM - 8:30 PM',dist:3.2},
+  {id:'nonnas-lasagna',cook:'tony',name:"Nonna's Lasagna",price:17,img:IMG('lasagna-dish'),cat:'italian',desc:'Slow-cooked ragù layered with béchamel and parmesan.',tags:['Non-veg'],portion:'1 portion = 400g',left:4,total:6,pu:'6:30 PM - 8:30 PM',dist:3.2},
+  {id:'kung-pao-chicken',cook:'lin',name:'Kung Pao Chicken',price:13,img:IMG('kung-pao'),cat:'asian',desc:'Wok-tossed chicken, peanuts and dried chilies in a savory glaze.',tags:['Non-veg','Spicy'],portion:'1 portion = 350g',left:7,total:10,pu:'5:30 PM - 7:30 PM',dist:0.8},
+  {id:'veg-fried-rice',cook:'lin',name:'Vegetable Fried Rice',price:10,img:IMG('fried-rice'),cat:'asian',desc:'Smoky wok-hei fried rice with seasonal vegetables.',tags:['Veg'],portion:'1 portion = 350g',left:11,total:14,pu:'5:30 PM - 7:30 PM',dist:0.8},
+];
+const foodById = id => FOODS.find(f=>f.id===id) || window.__addedFoods.find(f=>f.id===id);
+const allFoods = () => [...FOODS, ...window.__addedFoods];
+
+/* ================= STATE ================= */
+window.__addedFoods = [];
+const S = {
+  screen:'splash', params:{}, stack:[],
+  role:null, loc:'San Francisco, CA', radius:'5 mi', cat:'all', query:'',
+  cart:{}, pay:'Apple Pay', orderTab:'active', mOrderTab:'New',
+  followed:new Set(), ratings:{}, expandedOrder:null,
+  makerMenu: FOODS.filter(f=>f.cook==='priya').map(f=>({...f})),
+  makerOrders:[
+    {id:'FD123456',customer:'Sarah J.',items:[{name:'Chicken Biryani',qty:2}],total:28,pu:'5:30 PM',status:'New'},
+    {id:'FD123455',customer:'Mike L.',items:[{name:'Paneer Butter Masala',qty:1}],total:16,pu:'6:00 PM',status:'New'},
+    {id:'FD123454',customer:'Emily D.',items:[{name:'Garlic Naan',qty:4}],total:16,pu:'5:45 PM',status:'Active'},
+    {id:'FD123450',customer:'James W.',items:[{name:'Chicken Biryani',qty:1},{name:'Gulab Jamun',qty:2}],total:26,pu:'Yesterday',status:'Completed'},
+  ],
+  orders:[
+    {id:'FD123456',items:[{name:'Chicken Biryani',qty:1,price:14},{name:'Gulab Jamun',qty:1,price:6}],total:20,status:'Preparing',date:'Today',pu:'5:00 PM - 7:00 PM',cook:"Priya's Kitchen"},
+    {id:'FD87654',items:[{name:'Paneer Butter Masala',qty:1,price:16}],total:16,status:'Delivered',date:'Jun 12, 2026',pu:'6:00 PM - 8:00 PM',cook:"Priya's Kitchen"},
+  ],
+  lastOrder:null, detailQty:1, reviewStars:{overall:0,quality:0,packaging:0,accuracy:0},
+  addForm:{}, searchCat:'all',
+};
+const cartCount = () => Object.values(S.cart).reduce((a,b)=>a+b,0);
+const cartTotal = () => Object.entries(S.cart).reduce((s,[id,q])=>{const f=foodById(id);return s+(f?f.price*q:0);},0);
+const money = n => '$'+n.toFixed(2);
+const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+/* ================= HELPERS ================= */
+function stars(v, cls=''){ let s=''; for(let i=1;i<=5;i++){ s += v>=i ? '★' : (v>=i-0.5 ? '⯪' : '☆'); } return `<span class="stars ${cls}">${s}</span>`; }
+function starInput(key, val, big=false){
+  let s=''; for(let i=1;i<=5;i++){ s+=`<span onclick="App.setStars('${key}',${i},event)" style="color:${i<=val?'var(--star)':'#D8DCD8'}">${i<=val?'★':'☆'}</span>`; }
+  return `<div class="stars${big?' big':''}">${s}</div>`;
+}
+function hdr(title, back=true){
+  return `<div class="hdr">${back?`<div class="back" onclick="App.back()">‹</div>`:'<div class="spacer"></div>'}<div class="title">${title}</div><div class="spacer"></div></div>`;
+}
+function foodCard(f){
+  const c = COOKS[f.cook];
+  return `<div class="food-card" onclick="App.go('food',{id:'${f.id}'})">
+    <img src="${f.img}" loading="lazy" alt="">
+    <div><div class="nm">${esc(f.name)}</div><div class="ck">${esc(c.name)}</div>
+    <div class="meta">${stars(c.rating)} ${c.rating} (${c.reviews}) · ${f.dist} mi</div>
+    ${f.left<=6?`<div class="low">${f.left} portions left</div>`:''}</div>
+    <div class="pr">$${f.price}</div></div>`;
+}
+function tabbar(items, active){
+  return `<div class="tabbar">${items.map(t=>
+    `<div class="tab ${t.k===active?'on':''}" onclick="App.go('${t.r}')"><span class="ic">${t.i}</span>${t.l}</div>`).join('')}</div>`;
+}
+const CTABS=[{k:'home',l:'Home',i:'⌂',r:'home'},{k:'search',l:'Search',i:'⌕',r:'search'},{k:'orders',l:'Orders',i:'🧾',r:'orders'},{k:'profile',l:'Profile',i:'👤',r:'profile'}];
+const MTABS=[{k:'dash',l:'Home',i:'⌂',r:'mDash'},{k:'orders',l:'Orders',i:'🧾',r:'mOrders'},{k:'earn',l:'Earnings',i:'👛',r:'mEarn'},{k:'prof',l:'Profile',i:'👤',r:'mProf'}];
+function pill(status){
+  const tone = status==='Preparing'?'orange':(status==='Delivered'||status==='Completed')?'green':(status==='Active'||status==='On the way')?'blue':'gray';
+  return `<span class="pill ${tone}">${status}</span>`;
+}
+
+/* ================= APP ================= */
+const App = {
+  go(name, params={}){ S.stack.push({s:S.screen,p:{...S.params}}); S.screen=name; S.params=params; if(name==='food')S.detailQty=1; render(); },
+  back(){ const prev=S.stack.pop(); if(prev){S.screen=prev.s;S.params=prev.p;} else {S.screen='splash';} render(); },
+  tab(name){ S.screen=name; S.params={}; S.stack=[]; render(); },
+  reset(){ location.reload(); },
+  setRole(r){ S.role=r; render(); },
+  setRadius(r){ S.radius=r; render(); },
+  setCat(c){ S.cat=c; render(); },
+  setSearchCat(c){ S.searchCat=c; render(); },
+  setPay(p){ S.pay=p; render(); },
+  setOrderTab(t){ S.orderTab=t; render(); },
+  setMOrderTab(t){ S.mOrderTab=t; render(); },
+  setStars(k,v,e){ e.stopPropagation(); S.reviewStars[k]=v; render(); },
+  qty(id,d){ const q=(S.cart[id]||0)+d; if(q<=0)delete S.cart[id]; else S.cart[id]=q; render(); },
+  detailQty(d){ S.detailQty=Math.max(1,S.detailQty+d); render(); },
+  addToCart(id,qty){ S.cart[id]=(S.cart[id]||0)+qty; App.go('cart'); },
+  toggleFollow(id){ S.followed.has(id)?S.followed.delete(id):S.followed.add(id); render(); },
+  toggleExpand(id){ S.expandedOrder=S.expandedOrder===id?null:id; render(); },
+  placeOrder(){
+    const ids=Object.keys(S.cart); if(!ids.length)return;
+    const items=ids.map(id=>{const f=foodById(id);return{name:f.name,qty:S.cart[id],price:f.price};});
+    const id='FD'+Math.floor(100000+Math.random()*900000);
+    const f=foodById(ids[0]);
+    const o={id,items,total:cartTotal(),status:'Preparing',date:'Today',pu:f.pu,cook:COOKS[f.cook].name};
+    S.orders.unshift(o); S.lastOrder=o; S.cart={}; S.stack=[]; S.screen='confirm'; render();
+  },
+  submitReview(id){ S.reviewStars={overall:0,quality:0,packaging:0,accuracy:0}; App.back(); },
+  toggleMenu(id){ const m=S.makerMenu.find(x=>x.id===id); if(m)m.active=m.active===false?true:false; render(); },
+  mOrderStatus(id,st){ const o=S.makerOrders.find(x=>x.id===id); if(o)o.status=st; render(); },
+  saveDish(){
+    const f=S.addForm;
+    const d={id:'dish-'+Date.now(),cook:'priya',name:f.name||'Untitled Dish',price:Number(f.price)||0,
+      img:IMG('dish-'+Date.now()),cat:f.cat||'indian',desc:f.desc||'',tags:(f.tags||'').split(',').map(t=>t.trim()).filter(Boolean),
+      portion:f.portion||'1 portion',left:Number(f.qty)||0,total:Number(f.qty)||0,pu:`${f.ps||'5:00 PM'} - ${f.pe||'7:00 PM'}`,dist:1.4,active:true};
+    S.makerMenu.unshift(d); window.__addedFoods.unshift(d); S.addForm={}; S.stack=[]; S.screen='mDash'; render();
+  },
+};
+
+/* ================= SCREENS ================= */
+const V = {};
+V.splash = () => `
+  <div class="splash fade"><div class="center">
+    <div class="logo">👨‍🍳</div><h1>Foodie</h1>
+    <p>Homemade food<br>from people near you</p>
+  </div>
+  <button class="btn" onclick="App.go('role')">Get Started</button>
+  <div class="login" onclick="App.go('signin')">Already have an account? <b>Log In</b></div></div>`;
+
+V.role = () => `
+  <div class="pad fade" style="padding-top:60px">
+    <div class="brand" style="text-align:center">Foodie</div>
+    <div class="h2" style="text-align:center;margin:10px 0 24px">What brings you here?</div>
+    ${[['customer','👤',"I'm a Customer",'I want to order food'],['maker','👨‍🍳',"I'm a Food Maker",'I want to sell my food']]
+      .map(([k,ic,t,s])=>`<div class="role-card ${S.role===k?'on':''}" onclick="App.setRole('${k}')">
+        <div class="ic">${ic}</div><div class="h3">${t}</div><div class="muted" style="margin-top:4px">${s}</div></div>`).join('')}
+    <button class="btn" onclick="App.go('signin')">Continue</button>
+  </div>`;
+
+V.signin = () => `
+  <div class="pad fade" style="padding-top:80px;text-align:center">
+    <div class="brand">Foodie</div>
+    <div class="h1" style="margin-top:8px">Welcome back!</div>
+    <div class="muted" style="margin:6px 0 34px">Sign in to continue</div>
+    <button class="btn dark" onclick="App.go('location')">🍎&nbsp; Continue with Apple</button>
+    <button class="btn outline" onclick="App.go('location')">G&nbsp; Continue with Google</button>
+    <button class="btn" onclick="App.go('location')">✉️&nbsp; Continue with Email</button>
+    <div class="muted" style="margin-top:22px;cursor:pointer" onclick="App.go('location')">Don't have an account? <b style="color:var(--primary)">Sign Up</b></div>
+  </div>`;
+
+V.location = () => `
+  ${hdr('Your Location')}
+  <div class="pad fade">
+    <div class="searchbar">🔍<input id="loc" value="${esc(S.loc)}" oninput="S.loc=this.value"></div>
+    <div class="mapbox"><div class="ring"></div><div class="pin">📍</div></div>
+    <div class="h3" style="margin:20px 0 10px">Search radius</div>
+    <div>${['1 mi','3 mi','5 mi','10 mi','20 mi'].map(r=>`<span class="chip ${S.radius===r?'on':''}" onclick="App.setRadius('${r}')">${r}</span>`).join('')}</div>
+    <button class="btn" style="margin-top:26px" onclick="App.go(S.role==='maker'?'mOnboard':'home')">Continue</button>
+  </div>`;
+
+V.home = () => {
+  const list = allFoods().filter(f=>S.cat==='all'||f.cat===S.cat);
+  return `
+  <div class="pad fade" style="padding-bottom:0">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div><div class="brand">Foodie</div>
+        <div class="muted" style="font-size:13px">📍 ${esc(S.loc)} · ${S.radius}</div></div>
+      <div style="font-size:22px">🔔</div>
+    </div>
+    <div class="searchbar" style="margin-top:12px" onclick="App.tab('search')">🔍<input placeholder="Search homemade food..." readonly></div>
+    <div class="hero"><img src="${FOODS[0].img}" loading="lazy"><div class="ov"><b>Homemade food available today</b><span>Fresh · Local · Delicious</span></div></div>
+    <div style="overflow-x:auto;white-space:nowrap;margin-bottom:4px;scrollbar-width:none">
+      <span class="chip ${S.cat==='all'?'on':''}" onclick="App.setCat('all')">All</span>
+      ${CATS.map(c=>`<span class="chip ${S.cat===c.id?'on':''}" onclick="App.setCat('${c.id}')">${c.icon} ${c.label}</span>`).join('')}
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0 10px">
+      <div class="h2">Today's Specials</div><div style="color:var(--primary);font-weight:600;font-size:14px;cursor:pointer" onclick="App.setCat('all')">See all</div>
+    </div>
+    <div style="padding-bottom:90px">${list.map(foodCard).join('')||'<div class="muted">No dishes in this category yet.</div>'}</div>
+  </div>
+  ${cartCount()?'<div class="fab" onclick="App.go(\'cart\')"><span>🛒 '+cartCount()+' item'+(cartCount()>1?'s':'')+'</span><span>'+money(cartTotal())+' →</span></div>':''}`;
+};
+
+V.search = () => {
+  const q=S.query.toLowerCase();
+  const list=allFoods().filter(f=>(S.searchCat==='all'||f.cat===S.searchCat)&&(!q||f.name.toLowerCase().includes(q)||f.desc.toLowerCase().includes(q)||f.tags.join(' ').toLowerCase().includes(q)));
+  return `${hdr('Search',false)}
+  <div class="pad fade">
+    <div class="searchbar">🔍<input placeholder="Search homemade food..." value="${esc(S.query)}" oninput="S.query=this.value;S._sf=true;render()"></div>
+    <div style="margin:10px 0;overflow-x:auto;white-space:nowrap;scrollbar-width:none">
+      <span class="chip ${S.searchCat==='all'?'on':''}" onclick="App.setSearchCat('all')">All</span>
+      ${CATS.map(c=>`<span class="chip ${S.searchCat===c.id?'on':''}" onclick="App.setSearchCat('${c.id}')">${c.icon} ${c.label}</span>`).join('')}
+    </div>
+    ${list.map(foodCard).join('')||'<div class="muted" style="text-align:center;margin-top:30px">No dishes match your search.</div>'}
+    <div style="height:20px"></div>
+  </div>`;
+};
+
+V.food = () => {
+  const f=foodById(S.params.id); if(!f)return `<div class="pad">Dish not found.</div>`;
+  const c=COOKS[f.cook];
+  return `
+  <div class="detail-img fade"><img src="${f.img}"><div class="bk" onclick="App.back()">‹</div></div>
+  <div class="pad" style="padding-bottom:110px">
+    <div style="display:flex;justify-content:space-between;align-items:center"><div class="h1">${esc(f.name)}</div><div class="h1">$${f.price}</div></div>
+    <div class="menu-row" onclick="App.go('cook',{id:c.id})">
+      <img src="${c.avatar}" style="width:40px;height:40px;border-radius:20px;object-fit:cover">
+      <div class="tx">${esc(c.name)}<div class="muted" style="font-size:12px">${stars(c.rating)} ${c.rating} (${c.reviews} reviews)</div></div>
+      <div class="chev">›</div>
+    </div>
+    <div class="kv"><span class="k">📍 Distance</span><b>${f.dist} miles away</b></div>
+    <div class="kv"><span class="k">⏰ Pickup</span><b>${f.pu}</b></div>
+    <div class="kv"><span class="k">🍽️ Availability</span><b style="color:${f.left<=6?'var(--orange)':'var(--primary)'}">${f.left} portions left</b></div>
+    <p class="muted" style="margin:12px 0;line-height:1.55">${esc(f.desc)}</p>
+    <div>${f.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>
+    <div class="muted" style="margin-top:6px">ⓘ ${esc(f.portion)}</div>
+  </div>
+  <div class="bottom-cta">
+    <div class="stepper"><button onclick="App.detailQty(-1)">−</button><span>${S.detailQty}</span><button onclick="App.detailQty(1)">+</button></div>
+    <button class="btn" onclick="App.addToCart('${f.id}',S.detailQty)">Add to Cart · ${money(f.price*S.detailQty)}</button>
+  </div>`;
+};
+
+V.cook = () => {
+  const c=COOKS[S.params.id]; if(!c)return `<div class="pad">Cook not found.</div>`;
+  const menu=allFoods().filter(f=>f.cook===c.id);
+  const fol=S.followed.has(c.id);
+  return `
+  <div class="banner fade"><img src="${c.banner}"><div class="bk" onclick="App.back()">‹</div></div>
+  <div class="pad" style="padding-bottom:30px">
+    <img class="avatar-lg" src="${c.avatar}">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+      <div class="h1">${esc(c.name)}</div>
+      <button class="btn ${fol?'outline':''}" style="width:auto;margin:0;padding:10px 22px" onclick="App.toggleFollow('${c.id}')">${fol?'Following':'Follow'}</button>
+    </div>
+    <div class="muted" style="margin:6px 0">${stars(c.rating)} ${c.rating} (${c.reviews} reviews) · ${c.dist} mi away · ${c.followers} followers</div>
+    <div style="margin:8px 0"><span class="pill green">🛡️ Verified Food Maker</span></div>
+    <div class="h3" style="margin:14px 0 6px">About me</div>
+    <p class="muted" style="line-height:1.55">${esc(c.about)}</p>
+    <div class="h3" style="margin:16px 0 10px">Today's Menu</div>
+    ${menu.map(foodCard).join('')}
+  </div>`;
+};
+
+V.cart = () => {
+  const ids=Object.keys(S.cart);
+  return `${hdr('Your Cart ('+cartCount()+')')}
+  <div class="pad fade" style="padding-bottom:30px">
+  ${ids.length? ids.map(id=>{const f=foodById(id),q=S.cart[id];return `
+    <div class="food-card"><img src="${f.img}">
+      <div><div class="nm">${esc(f.name)}</div><div class="ck">$${f.price} each</div>
+      <div style="margin-top:8px"><span class="stepper"><button onclick="App.qty('${id}',-1)">−</button><span>${q}</span><button onclick="App.qty('${id}',1)">+</button></span></div></div>
+      <div class="pr">${money(f.price*q)}</div></div>`;}).join('') : `
+    <div style="text-align:center;margin:60px 0"><div style="font-size:56px">🛍️</div>
+    <div class="h2" style="margin:12px 0 6px">Your cart is empty</div>
+    <div class="muted">Add some homemade dishes to get started.</div></div>`}
+  ${ids.length?`
+    <div class="card" style="margin-top:6px">
+      <div class="kv"><span class="k">Subtotal</span><b>${money(cartTotal())}</b></div>
+      <div class="kv"><span class="k">Delivery/Service</span><b>$0.00</b></div>
+      <div class="kv"><span class="k"><b>Total</b></span><b>${money(cartTotal())}</b></div>
+    </div>
+    <button class="btn" onclick="App.go('checkout')">Proceed to Checkout</button>`
+  : `<button class="btn" onclick="App.tab('home')">Browse food</button>`}
+  </div>`;
+};
+
+V.checkout = () => `
+  ${hdr('Checkout')}
+  <div class="pad fade" style="padding-bottom:30px">
+    <div class="h3" style="margin-bottom:10px">Delivery Method</div>
+    <div class="radio-card on"><div class="radio-dot"></div><div><b>Pickup</b> <span class="muted">(at cook's location)</span><div class="muted" style="font-size:13px;margin-top:3px">Pickup time: 5:00 PM - 7:00 PM</div></div></div>
+    <div class="h3" style="margin:16px 0 10px">Payment Method</div>
+    ${[['Apple Pay','🍎'],['Card','💳'],['Google Pay','G']].map(([p,ic])=>`
+      <div class="radio-card ${S.pay===p?'on':''}" onclick="App.setPay('${p}')"><div class="radio-dot"></div><div style="font-size:20px">${ic}</div><b>${p}</b></div>`).join('')}
+    <div class="h3" style="margin:16px 0 6px">Order Summary</div>
+    <div class="card">
+      <div class="kv"><span class="k">Subtotal</span><b>${money(cartTotal())}</b></div>
+      <div class="kv"><span class="k">Service Fee</span><b>$0.00</b></div>
+      <div class="kv"><span class="k"><b>Total</b></span><b>${money(cartTotal())}</b></div>
+    </div>
+    <button class="btn" onclick="App.placeOrder()">Pay Now · ${money(cartTotal())}</button>
+  </div>`;
+
+V.confirm = () => {
+  const o=S.lastOrder; if(!o)return `<div class="pad">No order found.</div>`;
+  return `<div class="pad fade" style="text-align:center">
+    <div class="check-big">✓</div>
+    <div class="h1">Order Confirmed!</div>
+    <div class="muted" style="margin:8px 0 20px">Your order has been placed successfully.</div>
+    <div class="card" style="text-align:left">
+      <div class="kv"><span class="k">Order</span><b>#${o.id}</b></div>
+      <div class="kv"><span class="k">Pickup</span><b>${o.pu}</b></div>
+      <div class="kv"><span class="k">Kitchen</span><b>${esc(o.cook)}</b></div>
+      <div class="kv"><span class="k">Distance</span><b>1.4 miles away</b></div>
+      <div class="kv"><span class="k">Paid with</span><b>${S.pay}</b></div>
+    </div>
+    <button class="btn" onclick="App.tab('orders')">View Order Details</button>
+    <button class="btn outline" onclick="App.tab('home')">Back to Home</button>
+  </div>`;
+};
+
+V.orders = () => {
+  const active=S.orders.filter(o=>o.status==='Preparing'||o.status==='On the way');
+  const past=S.orders.filter(o=>o.status==='Delivered'||o.status==='Cancelled');
+  const list=S.orderTab==='active'?active:past;
+  return `${hdr('My Orders',false)}
+  <div class="pad fade">
+    <div class="tabs"><div class="t ${S.orderTab==='active'?'on':''}" onclick="App.setOrderTab('active')">Active (${active.length})</div><div class="t ${S.orderTab==='past'?'on':''}" onclick="App.setOrderTab('past')">Past (${past.length})</div></div>
+    ${list.map(o=>`
+      <div class="order-card">
+        <div style="display:flex;justify-content:space-between;align-items:center"><b>#${o.id}</b>${pill(o.status)}</div>
+        <div class="muted" style="font-size:13px;margin:8px 0">${o.items.map(i=>`${esc(i.name)} (${i.qty})`).join(' · ')}</div>
+        <div class="kv"><span class="k">Total</span><b>${money(o.total)}</b></div>
+        <div class="kv"><span class="k">${o.status==='Delivered'?'Date':'Pickup'}</span><b>${o.status==='Delivered'?o.date:o.pu}</b></div>
+        ${S.expandedOrder===o.id?`<div class="muted" style="font-size:13px;margin-top:8px;line-height:1.6">${o.items.map(i=>`• ${esc(i.name)} × ${i.qty} — ${money(i.price*i.qty)}`).join('<br>')}<br>Kitchen: ${esc(o.cook)}</div>`:''}
+        <div class="btn-row" style="margin-top:10px">
+          <button class="btn outline" onclick="App.toggleExpand('${o.id}')">${S.expandedOrder===o.id?'Hide':'View Details'}</button>
+          ${o.status==='Delivered'?`<button class="btn" onclick="App.go('review',{id:'${o.id}'})">Rate</button>`:''}
+        </div>
+      </div>`).join('')||'<div class="muted" style="text-align:center;margin-top:30px">No orders here yet.</div>'}
+    <div style="height:16px"></div>
+  </div>`;
+};
+
+V.review = () => {
+  const o=S.orders.find(x=>x.id===S.params.id);
+  const r=S.reviewStars;
+  return `${hdr('Rate Your Experience')}
+  <div class="pad fade" style="text-align:center">
+    <div class="muted">How was your food and service?</div>
+    <div style="margin:10px 0">${starInput('overall',r.overall,true)}</div>
+    ${[['quality','Food Quality'],['packaging','Packaging'],['accuracy','Accuracy']].map(([k,l])=>`
+      <div class="card" style="display:flex;justify-content:space-between;align-items:center;text-align:left"><b>${l}</b>${starInput(k,r[k])}</div>`).join('')}
+    <div class="field" style="text-align:left"><label>Add a comment (optional)</label><textarea placeholder="Tell the cook what you loved..."></textarea></div>
+    <button class="btn" onclick="App.submitReview('${o?o.id:''}')">Submit Review</button>
+  </div>`;
+};
+
+V.profile = () => `
+  <div class="pad fade" style="text-align:center;padding-top:26px">
+    <img src="${COOKS.priya.avatar}" style="width:90px;height:90px;border-radius:45px;object-fit:cover">
+    <div class="h2" style="margin-top:10px">Sarah Johnson</div>
+    <div style="color:var(--primary);font-weight:600;font-size:14px;margin:4px 0 18px;cursor:pointer">Edit Profile</div>
+  </div>
+  <div class="pad" style="padding-top:0">
+    ${[['📍','My Addresses',S.loc],['💳','Payment Methods','Apple Pay ····4242'],['🧾','Order History',S.orders.length+' orders','orders'],['❤️','Favorites','3 kitchens'],['🔔','Notifications','On'],['⚙️','Settings','']]
+    .map(([ic,t,s,r])=>`<div class="menu-row" ${r?`onclick="App.tab('${r}')"` :''}><div class="ic">${ic}</div><div class="tx">${t}<div class="muted" style="font-size:12px;font-weight:400">${s}</div></div><div class="chev">›</div></div>`).join('')}
+    <button class="btn outline" style="margin-top:18px" onclick="S.stack=[];App.tab('splash')">Log Out</button>
+    <div style="height:16px"></div>
+  </div>`;
+
+V.mOnboard = () => `
+  <div class="pad fade" style="padding-top:70px;text-align:center">
+    <div class="brand">Foodie</div>
+    <div style="font-size:72px;margin:26px 0">👩‍🍳</div>
+    <div class="h1">Join as a Food Maker</div>
+    <div class="muted" style="margin:8px 0 30px;line-height:1.5">Share your home-cooked food<br>with your community</div>
+    <button class="btn" onclick="App.go('mCreate')">Get Started</button>
+    <div class="muted" style="margin-top:16px;cursor:pointer" onclick="S.stack=[];S.screen='splash';render()">Already have an account? <b style="color:var(--primary)">Log In</b></div>
+  </div>`;
+
+V.mCreate = () => `
+  ${hdr('Create Your Profile')}
+  <div class="pad fade">
+    <div style="text-align:center;margin:6px 0 18px"><div style="width:90px;height:90px;border-radius:45px;background:var(--surface);font-size:40px;display:inline-flex;align-items:center;justify-content:center">👤</div></div>
+    <div class="field"><label>Kitchen Name</label><input id="mk-name" value="${esc(S.kitchen.name)}"></div>
+    <div class="field"><label>About You</label><textarea id="mk-about">${esc(S.kitchen.about)}</textarea></div>
+    <div class="field"><label>Location</label><input id="mk-loc" value="${esc(S.loc)}"></div>
+    <button class="btn" onclick="S.kitchen.name=document.getElementById('mk-name').value;S.kitchen.about=document.getElementById('mk-about').value;S.loc=document.getElementById('mk-loc').value;App.go('mVerify')">Continue</button>
+  </div>`;
+
+V.mVerify = () => `
+  ${hdr('Verification Required')}
+  <div class="pad fade">
+    <div class="muted" style="margin-bottom:16px;line-height:1.5">We need to verify your identity and food handling information.</div>
+    ${[['🪪','ID Verification',1],['📱','Phone Verification',1],['🍳','Kitchen Information',0],['📋','Food Safety Agreement',0]]
+      .map(([ic,t,done])=>`<div class="verify-row"><div class="ic">${ic}</div><div class="tx">${t}</div>${done?'<span style="color:var(--primary);font-size:22px">✓</span>':'<span class="chev" style="color:var(--muted)">›</span>'}</div>`).join('')}
+    <button class="btn" style="margin-top:14px" onclick="S.stack=[];S.screen='mDash';render()">Continue</button>
+  </div>`;
+
+V.mDash = () => {
+  const menu=S.makerMenu;
+  return `
+  <div class="pad fade" style="padding-bottom:0">
+    <div class="h2">Good morning, ${esc(S.kitchen.name.split("'")[0])}! 👋</div>
+    <div class="muted" style="margin-top:4px">Here's your today's overview</div>
+    <div class="stat-grid">
+      <div class="stat"><div class="v">$126</div><div class="l">Today's sales</div></div>
+      <div class="stat"><div class="v">12</div><div class="l">Orders</div></div>
+      <div class="stat"><div class="v">18</div><div class="l">Food remaining</div></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin:6px 0 4px">
+      <div class="h2">Today's Menu</div><div style="color:var(--primary);font-weight:700;font-size:14px;cursor:pointer" onclick="App.go('mAdd')">+ Add Food</div>
+    </div>
+    ${menu.map(m=>{const sold=m.total-m.left,pct=m.total?Math.round(sold/m.total*100):0,on=m.active!==false;return `
+      <div class="card" style="${on?'':'opacity:0.55'}">
+        <div style="display:flex;gap:12px;align-items:center">
+          <img src="${m.img}" style="width:64px;height:64px;border-radius:12px;object-fit:cover">
+          <div style="flex:1"><div class="h3">${esc(m.name)}</div><div class="muted" style="font-size:13px">$${m.price} · ${sold}/${m.total} sold</div>
+          <div class="prog"><i style="width:${pct}%"></i></div></div>
+          <div class="switch ${on?'on':''}" onclick="App.toggleMenu('${m.id}')"></div>
+        </div>
+      </div>`;}).join('')}
+    <button class="btn" onclick="App.go('mAdd')">+ Add Food</button>
+    <div style="height:90px"></div>
+  </div>`;
+};
+
+V.mAdd = () => {
+  const f=S.addForm;
+  const inp=(k,ph)=>`value="${esc(f[k]||'')}" oninput="S.addForm.${k}=this.value"`;
+  return `${hdr('Add Food')}
+  <div class="pad fade">
+    <div style="border:2px dashed var(--border);border-radius:16px;height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);margin-bottom:16px">
+      <div style="font-size:30px">🖼️</div><div style="font-size:13px;font-weight:600">Add photo</div></div>
+    <div class="field"><label>Food Name</label><input ${inp('name','e.g. Chicken Biryani')} placeholder="e.g. Chicken Biryani"></div>
+    <div class="field"><label>Description</label><textarea oninput="S.addForm.desc=this.value" placeholder="Describe your dish...">${esc(f.desc||'')}</textarea></div>
+    <div class="field"><label>Category</label><div>${CATS.filter(c=>c.id!=='more').map(c=>`<span class="chip ${(f.cat||'indian')===c.id?'on':''}" onclick="S.addForm.cat='${c.id}';render()">${c.icon} ${c.label}</span>`).join('')}</div></div>
+    <div style="display:flex;gap:10px">
+      <div class="field" style="flex:1"><label>Price ($)</label><input ${inp('price','14')} inputmode="decimal"></div>
+      <div class="field" style="flex:1"><label>Quantity</label><input ${inp('qty','10')} inputmode="numeric"></div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <div class="field" style="flex:1"><label>Pickup Start</label><input ${inp('ps','5:00 PM')} placeholder="5:00 PM"></div>
+      <div class="field" style="flex:1"><label>Pickup End</label><input ${inp('pe','7:00 PM')} placeholder="7:00 PM"></div>
+    </div>
+    <div class="field"><label>Tags (comma separated)</label><input ${inp('tags','Veg, Spicy')} placeholder="Veg, Spicy"></div>
+    <div class="field"><label>Portion</label><input ${inp('portion','1 portion = 350g')} placeholder="1 portion = 350g"></div>
+    <button class="btn" onclick="App.saveDish()">Save Dish</button>
+    <div style="height:16px"></div>
+  </div>`;
+};
+
+V.mOrders = () => {
+  const tabs=['New','Active','Completed'];
+  const list=S.makerOrders.filter(o=>o.status===S.mOrderTab);
+  return `${hdr('Orders',false)}
+  <div class="pad fade">
+    <div class="tabs">${tabs.map(t=>{const n=S.makerOrders.filter(o=>o.status===t).length;return `<div class="t ${S.mOrderTab===t?'on':''}" onclick="App.setMOrderTab('${t}')">${t} (${n})</div>`;}).join('')}</div>
+    ${list.map(o=>`
+      <div class="order-card">
+        <div style="display:flex;justify-content:space-between;align-items:center"><b>#${o.id}</b>${pill(o.status)}</div>
+        <div class="muted" style="font-size:13px;margin:8px 0">${esc(o.customer)} · ${o.items.map(i=>`${esc(i.name)} × ${i.qty}`).join(', ')}</div>
+        <div class="kv"><span class="k">Pickup</span><b>${o.pu}</b></div>
+        <div class="kv"><span class="k">Total</span><b>${money(o.total)}</b></div>
+        ${o.status==='New'?`<div class="btn-row" style="margin-top:10px"><button class="btn" onclick="App.mOrderStatus('${o.id}','Active')">Accept</button><button class="btn outline" onclick="App.mOrderStatus('${o.id}','Completed')">Reject</button></div>`:''}
+      </div>`).join('')||'<div class="muted" style="text-align:center;margin-top:30px">No orders here.</div>'}
+    <div style="height:16px"></div>
+  </div>`;
+};
+
+V.mEarn = () => {
+  const wk=[22,35,28,41,30,52,44,38,47,33,55,49],mx=Math.max(...wk);
+  return `${hdr('Earnings',false)}
+  <div class="pad fade">
+    <div class="card" style="text-align:center;background:var(--dark);border:none">
+      <div style="color:rgba(255,255,255,0.7);font-size:13px">Total Earnings</div>
+      <div style="color:#fff;font-size:34px;font-weight:800;margin:4px 0">$342.50</div>
+      <div style="color:rgba(255,255,255,0.7);font-size:13px">This Month</div>
+    </div>
+    <div class="card">
+      <div class="kv"><span class="k">Orders</span><b>$358.00</b></div>
+      <div class="kv"><span class="k">Commission (10%)</span><b style="color:var(--red)">−$35.80</b></div>
+      <div class="kv"><span class="k">Tips</span><b style="color:var(--primary)">+$1.10</b></div>
+    </div>
+    <div class="card"><b>Weekly payouts</b><div class="bars">${wk.map(v=>`<i style="height:${Math.round(v/mx*100)}%"></i>`).join('')}</div></div>
+    <button class="btn outline" onclick="void 0">View Payout Details</button>
+    <div style="height:16px"></div>
+  </div>`;
+};
+
+V.mProf = () => `
+  <div class="banner fade"><img src="${COOKS.priya.banner}"></div>
+  <div class="pad" style="padding-bottom:20px">
+    <img class="avatar-lg" src="${COOKS.priya.avatar}">
+    <div class="h1" style="margin-top:8px">${esc(S.kitchen.name)}</div>
+    <div class="muted" style="margin:6px 0">${stars(4.8)} 4.8 (63 reviews) · 1.4 mi away</div>
+    <div><span class="pill green">🛡️ Verified Food Maker</span></div>
+    <div class="h3" style="margin:14px 0 6px">About me</div>
+    <p class="muted" style="line-height:1.55">${esc(S.kitchen.about)}</p>
+    <div class="stat-grid">
+      <div class="stat"><div class="v">1.2k</div><div class="l">Followers</div></div>
+      <div class="stat"><div class="v">63</div><div class="l">Reviews</div></div>
+      <div class="stat"><div class="v">4.8</div><div class="l">Rating</div></div>
+    </div>
+    <div class="h3" style="margin:6px 0 10px">Today's Menu</div>
+    ${S.makerMenu.map(m=>`
+      <div class="food-card" style="cursor:default"><img src="${m.img}">
+        <div><div class="nm">${esc(m.name)}</div><div class="ck">${m.total-m.left}/${m.total} sold</div></div>
+        <div class="pr">$${m.price}</div></div>`).join('')}
+    <button class="btn outline" onclick="App.go('mCreate')">Edit Profile</button>
+    <div style="height:70px"></div>
+  </div>`;
+
+/* ================= RENDER ================= */
+const TABSCREENS = {
+  home:[CTABS,'home'], search:[CTABS,'search'], orders:[CTABS,'orders'], profile:[CTABS,'profile'],
+  mDash:[MTABS,'dash'], mOrders:[MTABS,'orders'], mEarn:[MTABS,'earn'], mProf:[MTABS,'prof'],
+};
+function render(){
+  const el=document.getElementById('screen');
+  el.innerHTML=(V[S.screen]||V.splash)();
+  const t=TABSCREENS[S.screen];
+  document.getElementById('tabbar-slot').innerHTML=t?tabbar(t[0],t[1]):'';
+  el.scrollTop=0;
+  const first=el.querySelector('.fade'); if(first){first.style.animation='none';void first.offsetWidth;first.style.animation='';}
+  if(S.screen==='search'&&S._sf){const i=el.querySelector('input');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length);}S._sf=false;}
+}
+S.kitchen={name:"Priya's Kitchen",about:'I love cooking traditional Indian food for my local community'};
+render();
+</script>
+</body>
+</html>

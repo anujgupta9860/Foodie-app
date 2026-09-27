@@ -1,0 +1,158 @@
+// Foodie backend — Prisma schema.
+// Local dev uses SQLite (zero config). For Postgres, change provider to
+// "postgresql", set DATABASE_URL to your Postgres connection string, and run
+// `npx prisma migrate dev` again. No model changes are required.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// NOTE: SQLite has no native enum support, so roles/statuses are stored as
+// plain strings. The type-safe const enums live in src/enums.ts.
+
+model User {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  passwordHash String
+  role         String    @default("CUSTOMER") // Role enum in src/enums.ts
+  avatarUrl    String?
+  phone        String?
+  createdAt    DateTime  @default(now())
+
+  kitchens Kitchen[]
+  orders   Order[]   @relation("CustomerOrders")
+  reviews  Review[]
+  follows  Follow[]
+}
+
+model Kitchen {
+  id            String   @id @default(cuid())
+  ownerId       String   @unique
+  owner         User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name          String
+  about         String   @default("")
+  location      String   @default("")
+  avatarUrl     String?
+  bannerUrl     String?
+  verified      Boolean  @default(false)
+  rating        Float    @default(0)
+  reviewCount   Int      @default(0)
+  followerCount Int      @default(0)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  dishes  Dish[]
+  orders  Order[]
+  reviews Review[]
+  follows Follow[]
+  payouts Payout[]
+}
+
+model Dish {
+  id            String   @id @default(cuid())
+  kitchenId     String
+  kitchen       Kitchen  @relation(fields: [kitchenId], references: [id], onDelete: Cascade)
+  name          String
+  description   String   @default("")
+  priceCents    Int
+  category      String
+  tags          String   @default("") // comma-separated
+  portion       String   @default("")
+  quantityTotal Int      @default(0)
+  quantityLeft  Int      @default(0)
+  pickupStart   String   @default("")
+  pickupEnd     String   @default("")
+  imageUrl      String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  orderItems OrderItem[]
+
+  @@index([kitchenId])
+  @@index([category])
+}
+
+model Order {
+  // Human-readable id like FD123456, generated in the orders route.
+  id              String      @id @default(cuid())
+  customerId      String
+  customer        User        @relation("CustomerOrders", fields: [customerId], references: [id], onDelete: Cascade)
+  kitchenId       String
+  kitchen         Kitchen     @relation(fields: [kitchenId], references: [id], onDelete: Restrict)
+  status          String      @default("NEW") // OrderStatus enum in src/enums.ts
+  subtotalCents   Int
+  serviceFeeCents Int         @default(0)
+  totalCents      Int
+  paymentMethod   String      @default("")
+  pickupSlot      String      @default("")
+  paymentIntentId String? // Stripe PaymentIntent id (stubbed until Stripe Connect is wired)
+  createdAt       DateTime    @default(now())
+
+  items  OrderItem[]
+  review Review?
+
+  @@index([customerId])
+  @@index([kitchenId])
+  @@index([status])
+}
+
+model OrderItem {
+  id                 String  @id @default(cuid())
+  orderId            String
+  order              Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  dishId             String
+  dish               Dish    @relation(fields: [dishId], references: [id], onDelete: Restrict)
+  nameSnapshot       String // dish name at purchase time
+  priceCentsSnapshot Int    // dish price at purchase time
+  qty                Int
+
+  @@index([orderId])
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  orderId    String   @unique // one review per order
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  customerId String
+  customer   User     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  kitchenId  String
+  kitchen    Kitchen  @relation(fields: [kitchenId], references: [id], onDelete: Cascade)
+  overall    Int // 1-5 (validated in zod)
+  quality    Int
+  packaging  Int
+  accuracy   Int
+  comment    String   @default("")
+  createdAt  DateTime @default(now())
+
+  @@index([kitchenId])
+}
+
+model Follow {
+  customerId String
+  customer   User    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  kitchenId  String
+  kitchen    Kitchen @relation(fields: [kitchenId], references: [id], onDelete: Cascade)
+
+  @@id([customerId, kitchenId])
+}
+
+model Payout {
+  id             String       @id @default(cuid())
+  kitchenId      String
+  kitchen        Kitchen      @relation(fields: [kitchenId], references: [id], onDelete: Cascade)
+  period         String // e.g. "2026-09"
+  grossCents     Int
+  commissionCents Int
+  tipsCents      Int          @default(0)
+  netCents       Int
+  status         String       @default("PENDING") // PayoutStatus enum in src/enums.ts
+  createdAt      DateTime     @default(now())
+
+  @@index([kitchenId])
+}

@@ -1,0 +1,698 @@
+openapi: 3.1.0
+info:
+  title: Foodie API
+  version: 1.0.0
+  description: |
+    Peer-to-peer homemade-food marketplace API. Customers browse dishes from
+    home kitchens, place pickup orders, and leave reviews; food makers manage
+    their kitchen, menu, orders, and earnings; admins oversee the platform.
+    Money is in integer cents. Auth is a Bearer JWT from /api/auth/*.
+servers:
+  - url: http://localhost:4000
+    description: Local dev
+security: []
+tags:
+  - name: auth
+  - name: dishes
+  - name: kitchens
+  - name: orders
+  - name: maker
+  - name: admin
+  - name: health
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Role:
+      type: string
+      enum: [CUSTOMER, MAKER, ADMIN]
+    OrderStatus:
+      type: string
+      enum: [NEW, ACTIVE, COMPLETED, CANCELLED]
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }
+        details: { type: array, items: { type: object } }
+    User:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        email: { type: string }
+        role: { $ref: '#/components/schemas/Role' }
+        avatarUrl: { type: [string, 'null'] }
+        phone: { type: [string, 'null'] }
+        createdAt: { type: string, format: date-time }
+    AuthResponse:
+      type: object
+      required: [token, user]
+      properties:
+        token: { type: string, description: 'JWT for Authorization: Bearer <token>' }
+        user: { $ref: '#/components/schemas/User' }
+    Kitchen:
+      type: object
+      properties:
+        id: { type: string }
+        ownerId: { type: string }
+        name: { type: string }
+        about: { type: string }
+        location: { type: string }
+        avatarUrl: { type: [string, 'null'] }
+        bannerUrl: { type: [string, 'null'] }
+        verified: { type: boolean }
+        rating: { type: number }
+        reviewCount: { type: integer }
+        followerCount: { type: integer }
+        isActive: { type: boolean }
+        createdAt: { type: string, format: date-time }
+    Dish:
+      type: object
+      properties:
+        id: { type: string }
+        kitchenId: { type: string }
+        name: { type: string }
+        description: { type: string }
+        priceCents: { type: integer, example: 1400 }
+        category: { type: string, example: indian }
+        tags: { type: string, description: 'comma-separated', example: 'Veg, Spicy' }
+        portion: { type: string, example: '1 portion = 350g' }
+        quantityTotal: { type: integer }
+        quantityLeft: { type: integer }
+        pickupStart: { type: string }
+        pickupEnd: { type: string }
+        imageUrl: { type: [string, 'null'] }
+        isActive: { type: boolean }
+        createdAt: { type: string, format: date-time }
+    OrderItem:
+      type: object
+      properties:
+        id: { type: string }
+        dishId: { type: string }
+        nameSnapshot: { type: string }
+        priceCentsSnapshot: { type: integer }
+        qty: { type: integer }
+    Order:
+      type: object
+      properties:
+        id: { type: string, example: FD123456 }
+        customerId: { type: string }
+        kitchenId: { type: string }
+        status: { $ref: '#/components/schemas/OrderStatus' }
+        subtotalCents: { type: integer }
+        serviceFeeCents: { type: integer }
+        totalCents: { type: integer }
+        paymentMethod: { type: string }
+        pickupSlot: { type: string }
+        paymentIntentId: { type: [string, 'null'] }
+        createdAt: { type: string, format: date-time }
+        items: { type: array, items: { $ref: '#/components/schemas/OrderItem' } }
+    Review:
+      type: object
+      properties:
+        id: { type: string }
+        orderId: { type: string }
+        customerId: { type: string }
+        kitchenId: { type: string }
+        overall: { type: integer, minimum: 1, maximum: 5 }
+        quality: { type: integer, minimum: 1, maximum: 5 }
+        packaging: { type: integer, minimum: 1, maximum: 5 }
+        accuracy: { type: integer, minimum: 1, maximum: 5 }
+        comment: { type: string }
+        createdAt: { type: string, format: date-time }
+    Payout:
+      type: object
+      properties:
+        id: { type: string }
+        kitchenId: { type: string }
+        period: { type: string, example: '2026-09' }
+        grossCents: { type: integer }
+        commissionCents: { type: integer }
+        tipsCents: { type: integer }
+        netCents: { type: integer }
+        status: { type: string, enum: [PENDING, PAID] }
+        createdAt: { type: string, format: date-time }
+    Paginated:
+      type: object
+      required: [data, page, limit, total]
+      properties:
+        data: { type: array, items: { type: object } }
+        page: { type: integer }
+        limit: { type: integer }
+        total: { type: integer }
+paths:
+  /health:
+    get:
+      tags: [health]
+      summary: Liveness probe
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: ok }
+                  time: { type: string, format: date-time }
+
+  /api/auth/signup:
+    post:
+      tags: [auth]
+      summary: Register as CUSTOMER or MAKER
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              properties:
+                name: { type: string, example: 'Sarah Johnson' }
+                email: { type: string, format: email, example: customer@foodie.demo }
+                password: { type: string, minLength: 6, example: password123 }
+                role: { type: string, enum: [CUSTOMER, MAKER], default: CUSTOMER }
+                phone: { type: string }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/AuthResponse' } } } }
+        '400': { description: Validation error, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '409': { description: Email already registered, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /api/auth/login:
+    post:
+      tags: [auth]
+      summary: Log in and receive a JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email, example: maker@foodie.demo }
+                password: { type: string, example: password123 }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/AuthResponse' } } } }
+        '401': { description: Invalid credentials, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /api/dishes:
+    get:
+      tags: [dishes]
+      summary: List active dishes with filters and pagination
+      parameters:
+        - in: query
+          name: category
+          schema: { type: string }
+          example: indian
+        - in: query
+          name: search
+          schema: { type: string }
+          example: biryani
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 20 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Paginated'
+                  - type: object
+                    properties:
+                      data: { type: array, items: { $ref: '#/components/schemas/Dish' } }
+
+  /api/dishes/{id}:
+    get:
+      tags: [dishes]
+      summary: Get one dish with its kitchen
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Dish' } } } }
+        '404': { description: Not found, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /api/kitchens:
+    get:
+      tags: [kitchens]
+      summary: List all active kitchens
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: object, properties: { data: { type: array, items: { $ref: '#/components/schemas/Kitchen' } } } } } } }
+
+  /api/kitchens/{id}:
+    get:
+      tags: [kitchens]
+      summary: Kitchen profile with menu and recent reviews
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Kitchen' } } } }
+        '404': { description: Not found, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /api/kitchens/{id}/dishes:
+    get:
+      tags: [kitchens]
+      summary: Active dishes for a kitchen (today's menu)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Dish' } } } } }
+        '404': { description: Not found, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /api/kitchens/{id}/follow:
+    post:
+      tags: [kitchens]
+      summary: Follow a kitchen
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '201': { description: Following, content: { application/json: { schema: { type: object, properties: { following: { type: boolean } } } } } }
+        '401': { description: Unauthorized, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: Not found, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    delete:
+      tags: [kitchens]
+      summary: Unfollow a kitchen
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Unfollowed, content: { application/json: { schema: { type: object, properties: { following: { type: boolean } } } } } }
+        '401': { description: Unauthorized, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: Not found, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /api/orders:
+    post:
+      tags: [orders]
+      summary: Place an order (all items must be from one kitchen)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [items, paymentMethod, pickupSlot]
+              properties:
+                items:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    required: [dishId, qty]
+                    properties:
+                      dishId: { type: string, example: chicken-biryani }
+                      qty: { type: integer, minimum: 1, maximum: 20, example: 2 }
+                paymentMethod: { type: string, example: 'Apple Pay' }
+                pickupSlot: { type: string, example: '5:00 PM - 7:00 PM' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  order: { $ref: '#/components/schemas/Order' }
+                  paymentIntent: { type: object, description: 'Mocked until Stripe is wired' }
+        '400': { description: Mixed kitchens, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '401': { description: Unauthorized, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: Dish not found, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '409': { description: Insufficient stock / unavailable, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /api/orders/mine:
+    get:
+      tags: [orders]
+      summary: My orders, newest first
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Order' } } } } }
+        '401': { description: Unauthorized, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /api/orders/{id}:
+    get:
+      tags: [orders]
+      summary: Order detail (customer, kitchen owner, or admin)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Order' } } } }
+        '401': { description: Unauthorized, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '403': { description: Forbidden, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: Not found, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /api/orders/{id}/review:
+    post:
+      tags: [orders]
+      summary: Review a completed order (one per order)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [overall, quality, packaging, accuracy]
+              properties:
+                overall: { type: integer, minimum: 1, maximum: 5 }
+                quality: { type: integer, minimum: 1, maximum: 5 }
+                packaging: { type: integer, minimum: 1, maximum: 5 }
+                accuracy: { type: integer, minimum: 1, maximum: 5 }
+                comment: { type: string }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/Review' } } } }
+        '401': { description: Unauthorized, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '403': { description: Not your order, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: Not found, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '409': { description: Not completed / already reviewed, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /api/maker/kitchen:
+    get:
+      tags: [maker]
+      summary: The signed-in maker's kitchen (404 if none yet)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Kitchen' } } } }
+        '404': { description: No kitchen yet, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /api/maker/kitchens:
+    post:
+      tags: [maker]
+      summary: Create your kitchen (one per maker, MAKER role)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, example: "Priya's Kitchen" }
+                about: { type: string }
+                location: { type: string }
+                avatarUrl: { type: string, format: uri }
+                bannerUrl: { type: string, format: uri }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/Kitchen' } } } }
+        '401': { description: Unauthorized, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '403': { description: Requires MAKER role, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '409': { description: Kitchen already exists, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /api/maker/kitchens/{id}:
+    patch:
+      tags: [maker]
+      summary: Edit your kitchen
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                about: { type: string }
+                location: { type: string }
+                avatarUrl: { type: string, format: uri }
+                bannerUrl: { type: string, format: uri }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Kitchen' } } } }
+        '403': { description: Not your kitchen, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: Not found, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /api/maker/dishes:
+    get:
+      tags: [maker]
+      summary: All dishes for your kitchen (including inactive)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Dish' } } } } }
+    post:
+      tags: [maker]
+      summary: List a new dish on your menu
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, priceCents, category, quantityTotal]
+              properties:
+                name: { type: string, example: 'Chicken Biryani' }
+                description: { type: string }
+                priceCents: { type: integer, minimum: 1, example: 1400 }
+                category: { type: string, example: indian }
+                tags: { type: string, example: 'Non-veg, Medium spice' }
+                portion: { type: string }
+                quantityTotal: { type: integer, minimum: 0, example: 10 }
+                pickupStart: { type: string, example: '5:00 PM' }
+                pickupEnd: { type: string, example: '7:00 PM' }
+                imageUrl: { type: string, format: uri }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/Dish' } } } }
+        '401': { description: Unauthorized, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '403': { description: Requires MAKER role, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: No kitchen yet, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /api/maker/dishes/{id}:
+    patch:
+      tags: [maker]
+      summary: Edit a dish, including the isActive toggle
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                description: { type: string }
+                priceCents: { type: integer, minimum: 1 }
+                category: { type: string }
+                tags: { type: string }
+                portion: { type: string }
+                quantityTotal: { type: integer, minimum: 0 }
+                pickupStart: { type: string }
+                pickupEnd: { type: string }
+                imageUrl: { type: string, format: uri }
+                isActive: { type: boolean }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Dish' } } } }
+        '404': { description: Not found, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /api/maker/orders:
+    get:
+      tags: [maker]
+      summary: Incoming orders for your kitchen
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: status
+          schema: { $ref: '#/components/schemas/OrderStatus' }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Order' } } } } }
+        '401': { description: Unauthorized, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '403': { description: Requires MAKER role, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /api/maker/orders/{id}:
+    patch:
+      tags: [maker]
+      summary: Accept (NEW→ACTIVE) or reject (NEW→CANCELLED, stock restored) an order
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action: { type: string, enum: [accept, reject] }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Order' } } } }
+        '404': { description: Not found, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '409': { description: Order is not NEW, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /api/maker/earnings:
+    get:
+      tags: [maker]
+      summary: Earnings summary, 12-week series, and payouts
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  summary:
+                    type: object
+                    properties:
+                      grossCents: { type: integer }
+                      commissionCents: { type: integer }
+                      tipsCents: { type: integer }
+                      netCents: { type: integer }
+                      commissionRate: { type: number, example: 0.1 }
+                  weekly:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        week: { type: string, example: '2026-09-21' }
+                        grossCents: { type: integer }
+                  payouts: { type: array, items: { $ref: '#/components/schemas/Payout' } }
+
+  /api/maker/dashboard:
+    get:
+      tags: [maker]
+      summary: Today's sales, open order count, food remaining
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  todaySalesCents: { type: integer }
+                  orderCount: { type: integer }
+                  foodRemaining: { type: integer }
+
+  /api/admin/stats:
+    get:
+      tags: [admin]
+      summary: Platform overview (ADMIN role)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userCount: { type: integer }
+                  kitchenCount: { type: integer }
+                  dishCount: { type: integer }
+                  orderCount: { type: integer }
+                  gmvCents: { type: integer }
+
+  /api/admin/users:
+    get:
+      tags: [admin]
+      summary: Paginated user list (ADMIN role)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 20 }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Paginated' } } } }
+        '403': { description: Requires ADMIN role, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /api/admin/orders:
+    get:
+      tags: [admin]
+      summary: Paginated order list with optional status filter (ADMIN role)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 20 }
+        - in: query
+          name: status
+          schema: { $ref: '#/components/schemas/OrderStatus' }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Paginated' } } } }
+        '403': { description: Requires ADMIN role, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /api/admin/payouts:
+    get:
+      tags: [admin]
+      summary: All payouts (ADMIN role)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Payout' } } } } }
+        '403': { description: Requires ADMIN role, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /api/admin/kitchens/{id}/verify:
+    patch:
+      tags: [admin]
+      summary: Approve or revoke a kitchen's verified status (ADMIN role)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [verified]
+              properties:
+                verified: { type: boolean }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Kitchen' } } } }
+        '404': { description: Not found, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
