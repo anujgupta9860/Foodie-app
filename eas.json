@@ -1,1 +1,36 @@
-{"build":{"development":{"android":{"buildType":"apk"},"developmentClient":true,"distribution":"internal"},"preview":{"android":{"buildType":"apk"},"distribution":"internal","ios":{"simulator":true}},"production":{"android":{"buildType":"app-bundle"},"autoIncrement":true}},"cli":{"appVersionSource":"local","version":">= 16.0.0"},"submit":{"production":{}}}
+{
+  "build": {
+    "development": {
+      "android": {
+        "buildType": "apk"
+      },
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "android": {
+        "buildType": "apk"
+      },
+      "distribution": "internal",
+      "ios": {
+        "simulator": true
+      }
+    },
+    "production": {
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://f5cef106395fea.lhr.life"
+      }
+    }
+  },
+  "cli": {
+    "appVersionSource": "local",
+    "version": ">= 16.0.0"
+  },
+  "submit": {
+    "production": {}
+  }
+}
