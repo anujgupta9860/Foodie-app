@@ -10,7 +10,7 @@
       "typedRoutes": false
     },
     "ios": {
-      "bundleIdentifier": "com.foodie.app",
+      "bundleIdentifier": "com.anujgup.foodie",
       "supportsTablet": true
     },
     "name": "Foodie",

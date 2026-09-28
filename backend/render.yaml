@@ -1,0 +1,16 @@
+# Render blueprint for the Foodie backend.
+# Deploy: push this repo to GitHub, then in Render Dashboard → New → Blueprint → select the repo.
+# Render will prompt for JWT_SECRET (generate any random string).
+services:
+  - type: web
+    name: foodie-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d

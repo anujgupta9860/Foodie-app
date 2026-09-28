@@ -1,1 +1,38 @@
-{"dependencies":{"@prisma/client":"^5.22.0","bcryptjs":"^2.4.3","cors":"^2.8.5","dotenv":"^16.4.5","express":"^4.21.2","jsonwebtoken":"^9.0.2","morgan":"^1.10.0","zod":"^3.23.8"},"description":"Foodie peer-to-peer homemade-food marketplace API (Express + TypeScript + Prisma)","devDependencies":{"@types/bcryptjs":"^2.4.6","@types/cors":"^2.8.17","@types/express":"^4.17.21","@types/jsonwebtoken":"^9.0.7","@types/morgan":"^1.9.9","@types/node":"^20.16.13","prisma":"^5.22.0","tsx":"^4.19.2","typescript":"^5.6.3"},"engines":{"node":">=20"},"name":"foodie-backend","private":true,"scripts":{"build":"tsc","dev":"tsx watch src/server.ts","migrate":"prisma migrate dev","postinstall":"prisma generate","seed":"tsx prisma/seed.ts","start":"node dist/server.js"},"version":"1.0.0"}
+{
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "zod": "^3.23.8"
+  },
+  "description": "Foodie peer-to-peer homemade-food marketplace API (Express + TypeScript + Prisma)",
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/morgan": "^1.9.9",
+    "@types/node": "^20.16.13",
+    "prisma": "^5.22.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "name": "foodie-backend",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/server.ts",
+    "migrate": "prisma migrate dev",
+    "postinstall": "prisma generate",
+    "seed": "tsx prisma/seed.ts",
+    "start": "node dist/src/server.js"
+  },
+  "version": "1.0.0"
+}
