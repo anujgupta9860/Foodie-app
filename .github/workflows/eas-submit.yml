@@ -1,0 +1,41 @@
+name: EAS Submit to TestFlight
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_id:
+        description: 'Expo Build ID to submit (default: latest successful)'
+        required: false
+        default: '7c3c0dd2-4308-42ed-bfde-c1e88c1b41c6'
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install EAS CLI
+        run: npm install -g eas-cli
+
+      - name: Write ASC API Key
+        run: |
+          echo "${{ secrets.ASC_KEY_P8 }}" > /tmp/AuthKey.p8
+          chmod 600 /tmp/AuthKey.p8
+
+      - name: Submit to TestFlight
+        run: |
+          eas submit \
+            --platform ios \
+            --id ${{ inputs.build_id }} \
+            --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_PATH: /tmp/AuthKey.p8
