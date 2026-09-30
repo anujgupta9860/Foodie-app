@@ -1,6 +1,12 @@
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { ErrorUtils } from 'react-native';
+
+// ErrorUtils is a React Native global, NOT an export from 'react-native'.
+// Importing it causes a startup crash (undefined.setGlobalHandler).
+declare const ErrorUtils: {
+  setGlobalHandler: (handler: (error: any, isFatal?: boolean) => void) => void;
+  getGlobalHandler: () => (error: any, isFatal?: boolean) => void;
+};
 
 interface ErrorInfo {
   message: string;
@@ -37,11 +43,15 @@ export class DebugErrorBoundary extends React.Component<{ children: React.ReactN
   }
 
   componentDidMount() {
-    ErrorUtils.setGlobalHandler((error: any, isFatal?: boolean) => {
-      this.setState({ error: toErrorInfo(isFatal ? 'GLOBAL FATAL' : 'GLOBAL', error) });
-      // Deliberately NOT calling the previous handler: the default
-      // handler calls reportFatal, which is aborting the app natively.
-    });
+    // Guard: if ErrorUtils global is missing, skip instead of crashing.
+    const EU = (global as any).ErrorUtils ?? (typeof ErrorUtils !== 'undefined' ? ErrorUtils : undefined);
+    if (EU?.setGlobalHandler) {
+      EU.setGlobalHandler((error: any, isFatal?: boolean) => {
+        this.setState({ error: toErrorInfo(isFatal ? 'GLOBAL FATAL' : 'GLOBAL', error) });
+        // Deliberately NOT calling the previous handler: the default
+        // handler calls reportFatal, which is aborting the app natively.
+      });
+    }
   }
 
   render() {
