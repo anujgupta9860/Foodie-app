@@ -12,7 +12,7 @@
     "ios": {
       "bundleIdentifier": "com.anujgup.foodie",
       "supportsTablet": true,
-      "buildNumber": "12"
+      "buildNumber": "13"
     },
     "name": "Foodie",
     "newArchEnabled": true,
