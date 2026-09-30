@@ -18,7 +18,9 @@
     "newArchEnabled": true,
     "orientation": "portrait",
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-asset",
+      "expo-secure-store"
     ],
     "scheme": "foodie",
     "slug": "foodie-app",
