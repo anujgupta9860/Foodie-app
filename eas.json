@@ -20,7 +20,10 @@
       "android": {
         "buildType": "app-bundle"
       },
-      "autoIncrement": true,
+      "autoIncrement": false,
+      "ios": {
+        "image": "latest"
+      },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://ebe9175d524134.lhr.life"
       }
