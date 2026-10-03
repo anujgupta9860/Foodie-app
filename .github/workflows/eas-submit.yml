@@ -40,8 +40,7 @@ jobs:
 
       - name: Install dependencies
         run: npm install
-
-
+            
 
 
       - name: Write ASC API Key
@@ -57,6 +56,7 @@ jobs:
           eas submit \
             --platform ios \
             --id ${{ inputs.build_id }} \
+            --verbose \
             --non-interactive
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
